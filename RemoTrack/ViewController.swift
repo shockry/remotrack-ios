@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreBluetooth
+import CoreMotion
 
 class ViewController: UIViewController, CBPeripheralManagerDelegate {
 
@@ -26,10 +27,14 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     
     var tiltAngleCharacteristic: CBMutableCharacteristic!
     
+    //MARK: Sensor setup
+    var motionManager: CMMotionManager!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Bluetooth
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
         
         // Initially, the characteristics are set to nil and changed later by reading sensor data
@@ -38,6 +43,10 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             properties: tiltAngleProperties,
             value: nil,
             permissions: tiltAnglePermissions)
+        
+        // Sensors
+        motionManager = CMMotionManager()
+        motionManager.deviceMotionUpdateInterval = 1.0/60.0
     }
 
 
@@ -50,10 +59,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             
             peripheralManager.add(accelerometerService)
             
-            //This is the name that will appear on the pairing menu of the browser
-            let advertisementData = [CBAdvertisementDataLocalNameKey: "RemoTrack Remote"]
-            
-            peripheralManager.startAdvertising(advertisementData)
+            startAdvertising()
         } else {
             //DOTO: make something about it 🙄
             print (peripheral.state)
@@ -88,6 +94,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         
         actionButton.isEnabled = true
         helpText.text = "Connected"
+        stopAdvertising()
     }
     
     
@@ -97,23 +104,60 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         
         actionButton.isEnabled = false
         helpText.text = "Game Disconnected"
+        startAdvertising()
+    }
+    
+    
+    func startAdvertising() {
+        
+        //This is the name that will appear on the pairing menu of the browser
+        let advertisementData = [CBAdvertisementDataLocalNameKey: "RemoTrack Remote"]
+        
+        peripheralManager.startAdvertising(advertisementData)
+    }
+
+    
+    func stopAdvertising() {
+        
+        peripheralManager.stopAdvertising()
+    }
+    
+    
+    func startSendingTiltAngles() {
+        
+        motionManager.startDeviceMotionUpdates(to: OperationQueue.main) {
+            (data: CMDeviceMotion?, error: Error?) in
+            if let gravity = data?.gravity {
+                // Getting the rotation angle and correct it to suit the landscape-right
+                var rotation = (atan2(gravity.x, gravity.y) * -1) - (M_PI/2)
+                
+                // Convert it into a byte array to send over Bluetooth
+                let payload =  Data(bytes: &rotation, count: MemoryLayout.size(ofValue: rotation))
+
+                 self.peripheralManager.updateValue(
+                    payload,
+                    for: self.tiltAngleCharacteristic,
+                    onSubscribedCentrals: nil)
+            }
+        }
+    }
+    
+    
+    func stopSendingTiltAngles() {
+        
+        motionManager.stopDeviceMotionUpdates()
     }
     
     
     //MARK: Actions
     @IBAction func sendData(_ sender: UIButton) {
         
-        print ("Sending sensor data..")
-        let payload: UInt8 = 8
-        self.peripheralManager.updateValue(
-            Data([payload]),
-            for: self.tiltAngleCharacteristic,
-            onSubscribedCentrals: nil)
+        startSendingTiltAngles()
     }
     
     @IBAction func stopSendingData(_ sender: UIButton) {
         
-        print ("Stopped sending data")
+        stopSendingTiltAngles()
     }
 
 }
