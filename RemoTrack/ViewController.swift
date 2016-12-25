@@ -27,6 +27,9 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     
     var tiltAngleCharacteristic: CBMutableCharacteristic!
     
+    //Flag for action button tap
+    var buttonDown: UInt8 = 0
+    
     //MARK: Sensor setup
     var motionManager: CMMotionManager!
     
@@ -94,6 +97,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         
         actionButton.isEnabled = true
         helpText.text = "Connected"
+        startSendingTiltAngles()
         stopAdvertising()
     }
     
@@ -132,7 +136,12 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
                 var rotation = (atan2(gravity.x, gravity.y) * -1) - (M_PI/2)
                 
                 // Convert it into a byte array to send over Bluetooth
-                let payload =  Data(bytes: &rotation, count: MemoryLayout.size(ofValue: rotation))
+                var payload = withUnsafePointer(to: &rotation) {
+                    Data(bytes: $0, count: MemoryLayout.size(ofValue: rotation))
+                }
+                
+                payload.append(self.buttonDown)
+                
 
                  self.peripheralManager.updateValue(
                     payload,
@@ -152,12 +161,12 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     //MARK: Actions
     @IBAction func sendData(_ sender: UIButton) {
         
-        startSendingTiltAngles()
+        buttonDown = 1
     }
     
     @IBAction func stopSendingData(_ sender: UIButton) {
         
-        stopSendingTiltAngles()
+        buttonDown = 0
     }
 
 }
