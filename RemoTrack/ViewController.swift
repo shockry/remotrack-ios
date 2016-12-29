@@ -18,6 +18,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     
     var player = Player(score: 0)
     
+    
     //MARK: Bluetooth setup
     var peripheralManager: CBPeripheralManager!
     
@@ -27,14 +28,14 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     let tiltAngleProperties: CBCharacteristicProperties = [.notify]
     let tiltAnglePermissions: CBAttributePermissions = []
     
-    let highScoreCharacteristicUUID = CBUUID(string: "CB6EEDE9-6AA5-4253-8629-31C53BC246CD")
-    let highScoreProperties: CBCharacteristicProperties = [.read, .write]
-    let highScorePermissions: CBAttributePermissions = [.readable, .writeable]
+    let bestScoreCharacteristicUUID = CBUUID(string: "CB6EEDE9-6AA5-4253-8629-31C53BC246CD")
+    let bestScoreProperties: CBCharacteristicProperties = [.read, .write]
+    let bestScorePermissions: CBAttributePermissions = [.readable, .writeable]
     
     
     var tiltAngleCharacteristic: CBMutableCharacteristic!
     
-    var highScoreCharacteristic: CBMutableCharacteristic!
+    var bestScoreCharacteristic: CBMutableCharacteristic!
     
     //Flag for action button tap
     var buttonDown: UInt8 = 0
@@ -57,11 +58,11 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             value: nil,
             permissions: tiltAnglePermissions)
         
-        highScoreCharacteristic = CBMutableCharacteristic(
-            type: highScoreCharacteristicUUID,
-            properties: highScoreProperties,
+        bestScoreCharacteristic = CBMutableCharacteristic(
+            type: bestScoreCharacteristicUUID,
+            properties: bestScoreProperties,
             value: nil,
-            permissions: highScorePermissions)
+            permissions: bestScorePermissions)
         
         
         // Sensors
@@ -82,14 +83,14 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
 
         if peripheral.state == CBManagerState.poweredOn {
             let accelerometerService = CBMutableService(type: accelerometerServiceUUID, primary: true)
-            accelerometerService.characteristics = [tiltAngleCharacteristic, highScoreCharacteristic]
+            accelerometerService.characteristics = [tiltAngleCharacteristic, bestScoreCharacteristic]
             
             peripheralManager.add(accelerometerService)
             
             startAdvertising()
         } else {
             //DOTO: make something about it 🙄
-            print (peripheral.state)
+            //print (peripheral.state)
         }
     }
 
@@ -133,6 +134,52 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         actionButton.isEnabled = false
         helpText.text = "Game Disconnected"
         startAdvertising()
+    }
+    
+    
+    func peripheralManager(_ peripheral: CBPeripheralManager,
+                           didReceiveRead request: CBATTRequest){
+        
+        if request.characteristic.uuid.isEqual(bestScoreCharacteristic.uuid) {
+            if bestScoreCharacteristic.value == nil {
+                var playerScore = player.bestScore
+                
+                let payload = withUnsafePointer(to: &playerScore) {
+                    Data(bytes: $0, count: MemoryLayout.size(ofValue: playerScore))
+                }
+                request.value = payload
+                bestScoreCharacteristic.value = payload
+            } else {
+                request.value = bestScoreCharacteristic.value
+            }
+            
+            peripheralManager.respond(
+                to: request,
+                withResult: .success)
+        }
+    }
+    
+    
+    func peripheralManager(_ peripheral: CBPeripheralManager,
+                           didReceiveWrite requests: [CBATTRequest]){
+        
+        for request in requests
+        {
+            if request.characteristic.uuid.isEqual(bestScoreCharacteristic.uuid)
+            {
+                let requestScore = getScoreFromData(data: request.value)
+                let currentScore = getScoreFromData(data: bestScoreCharacteristic.value)
+                
+                if requestScore > currentScore {
+                    bestScoreCharacteristic.value = request.value
+                    player.bestScore = requestScore
+                    self.savePlayer()
+                }
+            }
+        }
+        
+        peripheralManager.respond(to: requests[0], withResult: .success)
+        
     }
     
     
@@ -190,6 +237,28 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     
     private func loadScore() -> Player? {
         return NSKeyedUnarchiver.unarchiveObject(withFile: Player.ArchiveURL.path) as? Player
+    }
+    
+    
+    private func getScoreFromData(data: Data?) -> UInt32 {
+        
+        if data == nil {
+            return 0
+        }
+        
+        // I guess there must be a better way of doing this.
+        
+        // Anyway, this reserves a 4 byte area in memory
+        var val: UInt32 = 0
+        
+        // Make an UnsafeMutableBufferPointer to that area
+        let valBuffer = UnsafeMutableBufferPointer(start: &val, count: MemoryLayout.size(ofValue: val))
+        
+        // Copy the value from the write request to that 4 byte area
+        // so that it now contains the value from the request
+        _ = data?.copyBytes(to: valBuffer, from: 0..<4)
+        
+        return val
     }
     
     //MARK: Actions

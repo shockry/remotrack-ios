@@ -12,7 +12,7 @@ class Player: NSObject, NSCoding {
     
     //MARK: Properties
     
-    var bestScore: Int
+    var bestScore: UInt32
     
     
     //MARK: Types
@@ -22,7 +22,7 @@ class Player: NSObject, NSCoding {
     }
     
     
-    init(score: Int) {
+    init(score: UInt32) {
 
         self.bestScore = score
     }
@@ -37,15 +37,15 @@ class Player: NSObject, NSCoding {
     
     required convenience init(coder aDecoder: NSCoder) {
         
-        let playerScore = aDecoder.decodeInteger(forKey: Keys.bestScore)
-        
-        self.init(score: playerScore)
+        let playerScore = aDecoder.decodeObject(forKey: Keys.bestScore) as? UInt32 ?? 0
+        self.init(score: UInt32(playerScore))
     }
     
     
     //MARK: Archiving Paths
     
     static let DocumentsDirectory = FileManager().urls(for: .documentDirectory, in: .userDomainMask).first!
-    static let ArchiveURL = DocumentsDirectory.appendingPathComponent("score")
+    
+    static let ArchiveURL = DocumentsDirectory.appendingPathComponent("score", isDirectory:false)
     
 }
