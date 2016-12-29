@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EE3B61C51E1531B700D02484 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3B61C41E1531B700D02484 /* Player.swift */; };
 		EE3E30B91E0C08D9006D4CD6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3E30B81E0C08D9006D4CD6 /* AppDelegate.swift */; };
 		EE3E30BB1E0C08D9006D4CD6 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3E30BA1E0C08D9006D4CD6 /* ViewController.swift */; };
 		EE3E30BE1E0C08D9006D4CD6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EE3E30BC1E0C08D9006D4CD6 /* Main.storyboard */; };
@@ -26,6 +27,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		EE3B61C41E1531B700D02484 /* Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		EE3E30B51E0C08D9006D4CD6 /* RemoTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RemoTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EE3E30B81E0C08D9006D4CD6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		EE3E30BA1E0C08D9006D4CD6 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 			children = (
 				EE3E30B81E0C08D9006D4CD6 /* AppDelegate.swift */,
 				EE3E30BA1E0C08D9006D4CD6 /* ViewController.swift */,
+				EE3B61C41E1531B700D02484 /* Player.swift */,
 				EE3E30BC1E0C08D9006D4CD6 /* Main.storyboard */,
 				EE3E30BF1E0C08D9006D4CD6 /* Assets.xcassets */,
 				EE3E30C11E0C08D9006D4CD6 /* LaunchScreen.storyboard */,
@@ -201,6 +204,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EE3E30BB1E0C08D9006D4CD6 /* ViewController.swift in Sources */,
+				EE3B61C51E1531B700D02484 /* Player.swift in Sources */,
 				EE3E30B91E0C08D9006D4CD6 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -411,6 +415,7 @@
 				EE3E30D41E0C08D9006D4CD6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		EE3E30D51E0C08D9006D4CD6 /* Build configuration list for PBXNativeTarget "RemoTrackTests" */ = {
 			isa = XCConfigurationList;
@@ -419,6 +424,7 @@
 				EE3E30D71E0C08D9006D4CD6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -16,6 +16,8 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     @IBOutlet weak var helpText: UILabel!
     @IBOutlet weak var actionButton: UIButton!
     
+    var player = Player(score: 0)
+    
     //MARK: Bluetooth setup
     var peripheralManager: CBPeripheralManager!
     
@@ -25,7 +27,14 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     let tiltAngleProperties: CBCharacteristicProperties = [.notify]
     let tiltAnglePermissions: CBAttributePermissions = []
     
+    let highScoreCharacteristicUUID = CBUUID(string: "CB6EEDE9-6AA5-4253-8629-31C53BC246CD")
+    let highScoreProperties: CBCharacteristicProperties = [.read, .write]
+    let highScorePermissions: CBAttributePermissions = [.readable, .writeable]
+    
+    
     var tiltAngleCharacteristic: CBMutableCharacteristic!
+    
+    var highScoreCharacteristic: CBMutableCharacteristic!
     
     //Flag for action button tap
     var buttonDown: UInt8 = 0
@@ -40,6 +49,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         // Bluetooth
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
         
+        
         // Initially, the characteristics are set to nil and changed later by reading sensor data
         tiltAngleCharacteristic = CBMutableCharacteristic(
             type: tiltAngleCharacteristicUUID,
@@ -47,9 +57,23 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             value: nil,
             permissions: tiltAnglePermissions)
         
+        highScoreCharacteristic = CBMutableCharacteristic(
+            type: highScoreCharacteristicUUID,
+            properties: highScoreProperties,
+            value: nil,
+            permissions: highScorePermissions)
+        
+        
         // Sensors
         motionManager = CMMotionManager()
         motionManager.deviceMotionUpdateInterval = 1.0/60.0
+        
+        
+        // Player
+        // If there is a stored player, use it
+        if let playerObj = self.loadScore() {
+            self.player = playerObj
+        }
     }
 
 
@@ -58,7 +82,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
 
         if peripheral.state == CBManagerState.poweredOn {
             let accelerometerService = CBMutableService(type: accelerometerServiceUUID, primary: true)
-            accelerometerService.characteristics = [tiltAngleCharacteristic]
+            accelerometerService.characteristics = [tiltAngleCharacteristic, highScoreCharacteristic]
             
             peripheralManager.add(accelerometerService)
             
@@ -141,9 +165,8 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
                 }
                 
                 payload.append(self.buttonDown)
-                
 
-                 self.peripheralManager.updateValue(
+                self.peripheralManager.updateValue(
                     payload,
                     for: self.tiltAngleCharacteristic,
                     onSubscribedCentrals: nil)
@@ -157,6 +180,17 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         motionManager.stopDeviceMotionUpdates()
     }
     
+    //MARK: Private methods
+    private func savePlayer() {
+        let savedSuccessfully = NSKeyedArchiver.archiveRootObject(player, toFile: Player.ArchiveURL.path)
+        
+        print (savedSuccessfully)
+    }
+    
+    
+    private func loadScore() -> Player? {
+        return NSKeyedUnarchiver.unarchiveObject(withFile: Player.ArchiveURL.path) as? Player
+    }
     
     //MARK: Actions
     @IBAction func sendData(_ sender: UIButton) {
