@@ -152,7 +152,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             } else {
                 request.value = bestScoreCharacteristic.value
             }
-            
+
             peripheralManager.respond(
                 to: request,
                 withResult: .success)
@@ -167,6 +167,9 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         {
             if request.characteristic.uuid.isEqual(bestScoreCharacteristic.uuid)
             {
+                stopSendingTiltAngles()
+                startAdvertising()
+                
                 let requestScore = getScoreFromData(data: request.value)
                 let currentScore = getScoreFromData(data: bestScoreCharacteristic.value)
                 
