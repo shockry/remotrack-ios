@@ -9,6 +9,7 @@
 import UIKit
 import CoreBluetooth
 import CoreMotion
+import AudioToolbox
 
 class ViewController: UIViewController, CBPeripheralManagerDelegate {
 
@@ -185,6 +186,8 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         {
             if request.characteristic.uuid.isEqual(bestScoreCharacteristic.uuid)
             {
+                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+                
                 let requestScore = getScoreFromData(data: request.value)
                 let currentScore = getScoreFromData(data: bestScoreCharacteristic.value)
                 
