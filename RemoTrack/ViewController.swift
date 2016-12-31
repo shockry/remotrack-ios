@@ -15,6 +15,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     //MARK: Properties
     @IBOutlet weak var helpText: UILabel!
     @IBOutlet weak var actionButton: UIButton!
+    @IBOutlet weak var replayButton: UIButton!
     
     var player = Player(score: 0)
     
@@ -32,10 +33,16 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     let bestScoreProperties: CBCharacteristicProperties = [.read, .write]
     let bestScorePermissions: CBAttributePermissions = [.readable, .writeable]
     
+    let replayPressedCharacteristicUUID = CBUUID(string: "941E4433-FAE2-4EF4-AEEC-3866FF4C4BF3")
+    let replayPressedProperties: CBCharacteristicProperties = [.notify]
+    let replayPressedPermissions: CBAttributePermissions = []
+    
     
     var tiltAngleCharacteristic: CBMutableCharacteristic!
     
     var bestScoreCharacteristic: CBMutableCharacteristic!
+    
+    var replayPressedCharacteristic: CBMutableCharacteristic!
     
     //Flag for action button tap
     var buttonDown: UInt8 = 0
@@ -64,6 +71,12 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             value: nil,
             permissions: bestScorePermissions)
         
+        replayPressedCharacteristic = CBMutableCharacteristic(
+            type: replayPressedCharacteristicUUID,
+            properties: replayPressedProperties,
+            value: nil,
+            permissions: replayPressedPermissions)
+        
         
         // Sensors
         motionManager = CMMotionManager()
@@ -83,13 +96,14 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
 
         if peripheral.state == CBManagerState.poweredOn {
             let accelerometerService = CBMutableService(type: accelerometerServiceUUID, primary: true)
-            accelerometerService.characteristics = [tiltAngleCharacteristic, bestScoreCharacteristic]
+            accelerometerService.characteristics = [tiltAngleCharacteristic, bestScoreCharacteristic,
+                                                    replayPressedCharacteristic]
             
             peripheralManager.add(accelerometerService)
             
             startAdvertising()
         } else {
-            //DOTO: make something about it 🙄
+            //TODO: make something about it 🙄
             //print (peripheral.state)
         }
     }
@@ -120,10 +134,12 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
                             central: CBCentral,
                             didSubscribeTo characteristic: CBCharacteristic) {
         
-        actionButton.isEnabled = true
-        helpText.text = "Connected"
-        startSendingTiltAngles()
-        stopAdvertising()
+        if characteristic.uuid.isEqual(tiltAngleCharacteristic.uuid) {
+            actionButton.isEnabled = true
+            helpText.text = "Connected"
+            startSendingTiltAngles()
+            stopAdvertising()
+        }
     }
     
     
@@ -131,9 +147,11 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
                            central: CBCentral,
                            didUnsubscribeFrom characteristic: CBCharacteristic) {
         
-        actionButton.isEnabled = false
-        helpText.text = "Game Disconnected"
-        startAdvertising()
+        if characteristic.uuid.isEqual(tiltAngleCharacteristic.uuid) {
+            actionButton.isEnabled = false
+            helpText.text = "Game Disconnected"
+            startAdvertising()
+        }
     }
     
     
@@ -167,9 +185,6 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         {
             if request.characteristic.uuid.isEqual(bestScoreCharacteristic.uuid)
             {
-                stopSendingTiltAngles()
-                startAdvertising()
-                
                 let requestScore = getScoreFromData(data: request.value)
                 let currentScore = getScoreFromData(data: bestScoreCharacteristic.value)
                 
@@ -178,11 +193,13 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
                     player.bestScore = requestScore
                     self.savePlayer()
                 }
+                
+                
             }
         }
         
         peripheralManager.respond(to: requests[0], withResult: .success)
-        
+        cleanupForGameOver()
     }
     
     
@@ -209,12 +226,14 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
                 // Getting the rotation angle and correct it to suit the landscape-right
                 var rotation = (atan2(gravity.x, gravity.y) * -1) - (M_PI/2)
                 
+                var payload = Data([self.buttonDown])
+                
                 // Convert it into a byte array to send over Bluetooth
-                var payload = withUnsafePointer(to: &rotation) {
+                let angle = withUnsafePointer(to: &rotation) {
                     Data(bytes: $0, count: MemoryLayout.size(ofValue: rotation))
                 }
                 
-                payload.append(self.buttonDown)
+                payload.append(angle)
 
                 self.peripheralManager.updateValue(
                     payload,
@@ -232,9 +251,8 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
     
     //MARK: Private methods
     private func savePlayer() {
-        let savedSuccessfully = NSKeyedArchiver.archiveRootObject(player, toFile: Player.ArchiveURL.path)
+        NSKeyedArchiver.archiveRootObject(player, toFile: Player.ArchiveURL.path)
         
-        print (savedSuccessfully)
     }
     
     
@@ -264,6 +282,23 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         return val
     }
     
+    
+    private func cleanupForGameOver() {
+        
+        stopSendingTiltAngles()
+        actionButton.isEnabled = false
+        replayButton.isHidden = false
+    }
+    
+    
+    private func prepareForReplay() {
+        
+        startSendingTiltAngles()
+        actionButton.isEnabled = true
+        replayButton.isHidden = true
+    }
+    
+    
     //MARK: Actions
     @IBAction func sendData(_ sender: UIButton) {
         
@@ -275,5 +310,16 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         buttonDown = 0
     }
 
+    @IBAction func replay(_ sender: UIButton) {
+        
+        // Notify the browser to restart the game
+        let payload = Data([1])
+        
+        self.peripheralManager.updateValue(
+            payload,
+            for: self.replayPressedCharacteristic,
+            onSubscribedCentrals: nil)
+        prepareForReplay()
+    }
 }
 

@@ -41,18 +41,28 @@
                                     </label>
                                 </subviews>
                             </stackView>
+                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AxL-UQ-N7f" userLabel="Replay Button">
+                                <rect key="frame" x="20" y="215" width="100" height="100"/>
+                                <state key="normal" image="replayButton"/>
+                                <connections>
+                                    <action selector="replay:" destination="BYZ-38-t0r" eventType="touchUpInside" id="SFi-HS-tjn"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="0.57323159946581226" green="0.12054448440115433" blue="0.57516463451717104" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="EJq-i5-WFl" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="20" id="2nA-Sm-oj6"/>
                             <constraint firstItem="EJq-i5-WFl" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="22" id="6H3-iM-2nk"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="AxL-UQ-N7f" secondAttribute="bottom" constant="5" id="AeA-U9-Ibz"/>
                             <constraint firstAttribute="trailingMargin" secondItem="IAf-Hc-bye" secondAttribute="trailing" constant="5" id="M85-VJ-8wO"/>
                             <constraint firstAttribute="bottom" secondItem="IAf-Hc-bye" secondAttribute="bottom" constant="5" id="MGW-hg-sgN"/>
+                            <constraint firstItem="AxL-UQ-N7f" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="nKE-Nq-1VQ"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="actionButton" destination="IAf-Hc-bye" id="Lgx-84-yv5"/>
                         <outlet property="helpText" destination="5BU-5C-3wK" id="hlE-N4-f5G"/>
+                        <outlet property="replayButton" destination="AxL-UQ-N7f" id="zeb-6U-Jl9"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -62,5 +72,6 @@
     </scenes>
     <resources>
         <image name="actionButton" width="100" height="100"/>
+        <image name="replayButton" width="100" height="100"/>
     </resources>
 </document>
