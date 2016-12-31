@@ -126,7 +126,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
             helpText.text = "Error publishing the service!"
             return
         }
-
+        
         helpText.text = "Ready to connect.."
     }
 
@@ -150,6 +150,7 @@ class ViewController: UIViewController, CBPeripheralManagerDelegate {
         
         if characteristic.uuid.isEqual(tiltAngleCharacteristic.uuid) {
             actionButton.isEnabled = false
+            replayButton.isHidden = true
             helpText.text = "Game Disconnected"
             startAdvertising()
         }
