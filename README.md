@@ -15,6 +15,10 @@ Features
 * Best score is saved on the phone rather than the browser, so you are carrying your best score wherever you go.
 * In case of loss, you are presented with a "play again" button on the phone (it vibrates, too :D).
 
+Click the image below to watch a boring video of me showing how this works 🤷‍♂️
+
+[![Video](https://img.youtube.com/vi/LiPRqrNF9ng/sddefault.jpg)](https://www.youtube.com/watch?v=LiPRqrNF9ng)
+
 How to run
 ----------
 
